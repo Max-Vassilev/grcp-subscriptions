@@ -34,19 +34,17 @@ class Database():
         try:
 
             async with self.async_session() as session:
-                subscription = (
-                    await session.execute(sa.select(Subscription).filter_by(email=email))
-                ).scalars().first()
-            if subscription is not None:
-                return CreateSubscriptionResponse(message="\nSubscription with this email already exists.")
 
-            if not self.validate_email(email):
-                return CreateSubscriptionResponse(message="\nInvalid email format")
+                subscription = (await session.execute(sa.select(Subscription).filter_by(email=email))).scalars().first()
+                if subscription is not None:
+                    return CreateSubscriptionResponse(message="\nSubscription with this email already exists.")
 
-            async with self.async_session() as session:
+                if not self.validate_email(email):
+                    return CreateSubscriptionResponse(message="\nInvalid email format")
+
                 session.add(Subscription(email=email, subscription_type=subscription_type))
                 await session.commit()
-            return CreateSubscriptionResponse(message="\nSubscription created")
+                return CreateSubscriptionResponse(message="\nSubscription created")
 
         except SQLAlchemyError as e:
             return CreateSubscriptionResponse(message=f"\nFailed to create subscription: {str(e)}")
